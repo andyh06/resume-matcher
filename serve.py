@@ -122,6 +122,21 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # Schemas
 # ---------------------------------------------------------------------------
+class EndpointInfo(BaseModel):
+    path: str = Field(..., description="Endpoint path.")
+    description: str = Field(..., description="One-line description of what this endpoint does.")
+
+
+class RootResponse(BaseModel):
+    service: str = Field(..., description="Service name.")
+    version: str = Field(..., description="API version.")
+    description: str = Field(..., description="One-line description of what this API does.")
+    sklearn_version: Optional[str] = Field(
+        None, description="scikit-learn version the pipeline was fitted with, or null if the artifact isn't loaded."
+    )
+    endpoints: List[EndpointInfo] = Field(..., description="Available endpoints.")
+
+
 class HealthResponse(BaseModel):
     status: str = Field(..., description="Always 'ok' if the process is up and answering requests.")
     artifact_loaded: bool = Field(..., description="Whether pipeline.joblib was loaded successfully at startup.")
@@ -266,6 +281,30 @@ def _keyword_gaps(resume_vec, jd_vec, feature_names) -> Tuple[List[KeywordWeight
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@app.get(
+    "/",
+    response_model=RootResponse,
+    summary="API index",
+    description="Lightweight index of the API: service info and available endpoints. Does not require the model artifact to be loaded.",
+)
+def root() -> RootResponse:
+    return RootResponse(
+        service="Resume Matcher API",
+        version=app.version,
+        description=(
+            "Matches a resume against a job description using a TF-IDF pipeline "
+            "fitted on O*NET occupation data."
+        ),
+        sklearn_version=BUNDLE["metadata"]["sklearn_version"] if BUNDLE is not None else None,
+        endpoints=[
+            EndpointInfo(path="/health", description="Liveness check and whether the model artifact is loaded."),
+            EndpointInfo(path="/info", description="Pipeline structure and build metadata for the loaded artifact."),
+            EndpointInfo(path="/match", description="POST a resume and job description to get a match score, keyword gaps, and closest occupations."),
+            EndpointInfo(path="/docs", description="Interactive API documentation (Swagger UI)."),
+        ],
+    )
+
+
 @app.get(
     "/health",
     response_model=HealthResponse,
