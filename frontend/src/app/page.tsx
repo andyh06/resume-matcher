@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 
-import { AuroraText } from "@/components/ui/aurora-text"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,17 +85,15 @@ export default function Home() {
       <GridPattern
         className={cn(
           "absolute inset-0 -z-10 h-full w-full",
-          "fill-white/[0.025] stroke-white/[0.06]",
+          "fill-foreground/[0.015] stroke-foreground/[0.03]",
           "[mask-image:radial-gradient(ellipse_65%_55%_at_50%_0%,black,transparent)]"
         )}
       />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col gap-12 px-4 pt-16 pb-24 sm:px-6">
         <header className="flex flex-col items-center gap-3 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-            <AuroraText colors={["#22d3ee", "#6366f1", "#a855f7", "#22d3ee"]}>
-              Resume Matcher
-            </AuroraText>
+          <h1 className="font-display text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+            Resume Matcher
           </h1>
           <p className="max-w-xl text-sm text-balance text-muted-foreground sm:text-base">
             Paste a job posting and your resume. See exactly which keywords
@@ -127,8 +124,13 @@ export default function Home() {
             <RippleButton
               onClick={handleAnalyze}
               disabled={!canSubmit}
-              rippleColor="rgba(0,0,0,0.15)"
-              className="border-primary bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+              rippleColor="rgba(255,255,255,0.35)"
+              className={cn(
+                "px-6 py-2.5 text-sm font-medium transition-colors",
+                canSubmit
+                  ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "cursor-not-allowed border-transparent bg-muted text-muted-foreground"
+              )}
             >
               {status === "loading" ? "Analyzing..." : "Analyze"}
             </RippleButton>

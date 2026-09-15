@@ -58,6 +58,21 @@ JOB_POSTING_STOPWORDS = frozenset({
     "flexible", "remote", "onsite", "hybrid", "location", "office", "world",
     "innovative", "leading", "leader", "industry", "organization", "mission",
     "culture", "value", "values", "people", "individual", "individuals",
+    "remaining", "maintain", "design", "partner", "own", "participate",
+})
+
+# Specific glued-fragment artifacts that survive token-level stopword
+# filtering because both halves are legitimate words individually. These
+# only exist because sklearn strips stop words ("to", "and", "with", ...)
+# before forming n-grams, gluing non-adjacent words together (e.g.
+# "...Engineer with our platform..." -> "engineer platform"). No token-level
+# rule can catch these without also blacklisting otherwise-valuable words
+# like "engineer" or "platform", so specific bad bigrams are denied by exact
+# match instead.
+DENY_BIGRAMS = frozenset({
+    "engineer platform",
+    "engineer design",
+    "design maintain",
 })
 
 # ---------------------------------------------------------------------------
@@ -195,14 +210,18 @@ class MatchResponse(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 def _is_informative_term(term: str) -> bool:
-    """Drop an n-gram if every one of its tokens is job-posting boilerplate or
-    purely numeric, and drop unigrams under 3 characters."""
+    """Drop an n-gram if ANY of its tokens is job-posting boilerplate or
+    purely numeric, drop unigrams under 3 characters, and drop specific
+    glued-fragment bigrams that survive token-level filtering."""
     tokens = term.split(" ")
 
     if len(tokens) == 1 and len(term) < 3:
         return False
 
-    if all(t in JOB_POSTING_STOPWORDS or t.isdigit() for t in tokens):
+    if any(t in JOB_POSTING_STOPWORDS or t.isdigit() for t in tokens):
+        return False
+
+    if term in DENY_BIGRAMS:
         return False
 
     return True
