@@ -1,0 +1,223 @@
+{
+  "info": {
+    "_postman_id": "b6f1a2e0-6b8a-4c1d-9a3e-3f7c9d2e5a10",
+    "name": "Resume Matcher API",
+    "description": "Deployed Modal API for the resume-matching TF-IDF pipeline. All requests hit the live deployed URL via {{baseUrl}} -- never localhost.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://andyh06--resume-matcher-fastapi-app.modal.run",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"status field is 'ok'\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"ok\");",
+              "});",
+              "",
+              "pm.test(\"artifact_loaded is true\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.artifact_loaded).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/info",
+          "host": ["{{baseUrl}}"],
+          "path": ["info"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"sklearn_version is present and equals 1.9.1\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.sklearn_version).to.exist;",
+              "    pm.expect(json.sklearn_version).to.eql(\"1.9.1\");",
+              "});",
+              "",
+              "pm.test(\"steps is present and non-empty\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.steps).to.be.an(\"array\");",
+              "    pm.expect(json.steps.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test(\"built_at is present\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.built_at).to.exist;",
+              "    pm.expect(json.built_at).to.be.a(\"string\");",
+              "    pm.expect(json.built_at.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test(\"vocabulary_size is a positive number\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.vocabulary_size).to.be.a(\"number\");",
+              "    pm.expect(json.vocabulary_size).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /match - valid input (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"job_description\": \"We are hiring a Senior Backend Engineer to lead the design and development of scalable backend services in Python and Go. You will build and maintain RESTful and gRPC APIs, work extensively with PostgreSQL and Redis, and own our Kubernetes-based deployment pipeline using Terraform for infrastructure as code. Strong experience with AWS, distributed systems, and CI/CD pipelines is required. You will mentor junior engineers, participate in on-call rotations, and drive improvements to system observability and monitoring using Prometheus and Grafana. 5+ years of backend engineering experience required.\",\n  \"resume\": \"Jordan Reyes is a backend engineer with 6 years of experience building RESTful APIs in Python using Django and Flask. Extensive experience with PostgreSQL, MySQL, and Redis for data storage and caching. Deployed services using Docker and AWS EC2, and automated testing and deployment with GitHub Actions CI/CD pipelines. Collaborated closely with frontend teams and participated in code reviews. Mentored two junior developers and improved API response times through query optimization and caching strategies.\",\n  \"top_k\": 5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/match",
+          "host": ["{{baseUrl}}"],
+          "path": ["match"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"match_score is a number between 0 and 100\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.match_score).to.be.a(\"number\");",
+              "    pm.expect(json.match_score).to.be.at.least(0);",
+              "    pm.expect(json.match_score).to.be.at.most(100);",
+              "});",
+              "",
+              "pm.test(\"missing_keywords is a non-empty array\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.missing_keywords).to.be.an(\"array\");",
+              "    pm.expect(json.missing_keywords.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test(\"closest_occupations has exactly 5 entries\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.closest_occupations).to.be.an(\"array\");",
+              "    pm.expect(json.closest_occupations.length).to.eql(5);",
+              "});",
+              "",
+              "pm.test(\"each occupation has title and score\", function () {",
+              "    const json = pm.response.json();",
+              "    json.closest_occupations.forEach(function (occ) {",
+              "        pm.expect(occ.title).to.be.a(\"string\");",
+              "        pm.expect(occ.title.length).to.be.above(0);",
+              "        pm.expect(occ.score).to.be.a(\"number\");",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /match - invalid input (422)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"job_description\": \"We are hiring a Senior Backend Engineer to lead the design and development of scalable backend services in Python and Go, with strong PostgreSQL, Redis, Kubernetes, and Terraform experience required for this role.\",\n  \"resume\": \"Too short to pass validation.\",\n  \"top_k\": 5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/match",
+          "host": ["{{baseUrl}}"],
+          "path": ["match"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 422\", function () {",
+              "    pm.response.to.have.status(422);",
+              "});",
+              "",
+              "pm.test(\"detail array is present\", function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.detail).to.be.an(\"array\");",
+              "    pm.expect(json.detail.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test(\"detail mentions the length violation on resume\", function () {",
+              "    const json = pm.response.json();",
+              "    const resumeError = json.detail.find(function (d) {",
+              "        return Array.isArray(d.loc) && d.loc.indexOf(\"resume\") !== -1;",
+              "    });",
+              "    pm.expect(resumeError, \"expected a validation error for the resume field\").to.exist;",
+              "    pm.expect(resumeError.msg.toLowerCase()).to.include(\"50 characters\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
